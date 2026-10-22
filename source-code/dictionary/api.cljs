@@ -8,10 +8,16 @@
      (dictionary/find-language-of-path settings \"/orders\" \"de\")      ;=> \"de\": no prefix, the page's
      (dictionary/make-path-in-language settings \"/orders\" \"de\")      ;=> \"/de/orders\"
 
+     ;; the texts: the catalogs fetched from the server, the same files it reads
+     (-> (dictionary/fetch-catalog! settings \"de\") (.then (fn [catalog] …)))
+     (dictionary/make-text {:fallback-language \"en\" :catalogs {\"de\" de \"en\" en}}
+                           \"de\" :orders.cart/add {:count 3})
+
    The settings are the server's, carried in the page; check them once,
    check-settings, before using them."
   (:require
    [dictionary.addresses :as addresses]
+   [dictionary.catalogs :as catalogs]
    [dictionary.settings :as settings]))
 
 (def settings-shape
@@ -43,3 +49,25 @@
    carries none, /orders."
   [settings path language]
   (addresses/make-path-in-language settings path language))
+
+(defn list-live-languages
+  "The languages that show here: the launched :languages, then the
+   :preview-languages this environment shows."
+  [settings]
+  (settings/list-live-languages settings))
+
+(defn fetch-catalog!
+  "A promise of a language's catalog, {\"orders.cart/add\" \"…\"}, from
+   /<catalogs-path>/<language>.json on the page's origin; failed when the
+   server has none."
+  [settings language]
+  (catalogs/fetch-catalog! settings language))
+
+(defn make-text
+  "The key's ICU message in the language, args filled in ({} for none),
+   by intl-messageformat; the fallback language's when the language's
+   catalog lacks it; the key's name when neither has it. texts:
+   {:fallback-language … :catalogs {language catalog}}, the catalogs
+   fetched so far."
+  [texts language message-key args]
+  (catalogs/make-text texts language message-key args))

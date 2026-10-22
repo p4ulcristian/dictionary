@@ -6,7 +6,8 @@
    every request is in it."
   (:require
    [clojure.string :as str]
-   [dictionary.addresses :as addresses]))
+   [dictionary.addresses :as addresses]
+   [dictionary.settings :as settings]))
 
 (defn- read-cookie [request cookie-name]
   (some (fn [pair]
@@ -30,19 +31,20 @@
        (sort-by (comp - second))
        (map first)))
 
-(defn- find-accepted-language [{:keys [languages]} header]
-  (let [ours (set languages)]
+(defn- find-accepted-language [settings header]
+  (let [ours (set (settings/list-live-languages settings))]
     (some (fn [tag] (or (ours tag) (ours (first (str/split tag #"-")))))
           (list-accepted-languages header))))
 
 (defn find-language-of-request
   "{:language \"de\" :path \"/orders\"}: the request's language, and its
    path (:uri) without the language's prefix."
-  [{:keys [default cookie-name languages] :as settings} request]
-  (let [{:keys [language path]} (addresses/split-language-from-path settings (:uri request))]
+  [{:keys [default cookie-name] :as settings} request]
+  (let [{:keys [language path]} (addresses/split-language-from-path settings (:uri request))
+        live                    (settings/list-live-languages settings)]
     {:language (or language
-                   (when (= 1 (count languages)) default)
-                   (when cookie-name ((set languages) (read-cookie request cookie-name)))
+                   (when (= 1 (count live)) default)
+                   (when cookie-name ((set live) (read-cookie request cookie-name)))
                    (find-accepted-language settings (get-in request [:headers "accept-language"]))
                    default)
      :path     path}))
@@ -54,9 +56,9 @@
    {:hreflang \"x-default\" :href the default's}]; none with one
    language. path carries no language; origin is the site's,
    \"https://shop.example\"."
-  [{:keys [languages default] :as settings} origin path]
-  (if (< 1 (count languages))
+  [{:keys [default] :as settings} origin path]
+  (if (< 1 (count (settings/list-live-languages settings)))
     (conj (mapv (fn [language] {:hreflang language :href (str origin (addresses/make-path-in-language settings path language))})
-                languages)
+                (settings/list-live-languages settings))
           {:hreflang "x-default" :href (str origin (addresses/make-path-in-language settings path default))})
     []))

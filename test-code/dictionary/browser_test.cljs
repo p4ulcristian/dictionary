@@ -2,11 +2,12 @@
   "The browser's side, on node: the language of an address, and an
    address made in a language."
   (:require
-   [cljs.test :refer [deftest is testing]]
+   [cljs.test :refer [async deftest is testing]]
    [dictionary.api :as dictionary]))
 
 (def ^:private settings
-  (dictionary/check-settings {:languages ["en" "de"] :default "en" :cookie-name nil}))
+  (dictionary/check-settings {:languages ["en" "de"] :default "en" :cookie-name nil
+                              :preview-languages [] :fallback-language "en" :catalogs-path "i18n"}))
 
 (deftest the-language-of-an-address
   (is (= "de" (dictionary/find-language-of-path settings "/de/orders" "en")))
@@ -24,3 +25,28 @@
   (is (= :dictionary/bad-settings
          (try (dictionary/check-settings {:languages []}) nil
               (catch :default e (:type (ex-data e)))))))
+
+(def ^:private texts
+  {:fallback-language "en"
+   :catalogs          {"en" {"orders.cart/add" "Add {count, plural, one {# item} other {# items}}" "orders.cart/title" "Cart"
+                             "sizes/small" "Small (<30cm)"}
+                       "de" {"orders.cart/add" "{count, plural, one {# Artikel} other {# Artikel}} hinzufügen"}}})
+
+(deftest texts-in-a-language
+  (is (= "Add 3 items" (dictionary/make-text texts "en" :orders.cart/add {:count 3})))
+  (is (= "1 Artikel hinzufügen" (dictionary/make-text texts "de" :orders.cart/add {:count 1})))
+  (is (= "Cart" (dictionary/make-text texts "de" :orders.cart/title {})) "missing in German: the fallback's")
+  (is (= "orders.cart/nowhere" (dictionary/make-text texts "de" :orders.cart/nowhere {})) "missing everywhere: the key's name")
+  (is (= "Small (<30cm)" (dictionary/make-text texts "en" :sizes/small {})) "a < is text, as on the server"))
+
+(deftest a-catalog-is-fetched-from-the-same-file
+  (async done
+         (let [fetch  (.-fetch js/globalThis)
+               asked  (atom nil)]
+           (set! (.-fetch js/globalThis) (fn [address _] (reset! asked address)
+                                           (js/Promise.resolve #js {:ok true :json (fn [] (js/Promise.resolve #js {"a/one" "Eins"}))})))
+           (-> (dictionary/fetch-catalog! settings "de")
+               (.then (fn [catalog]
+                        (is (= "/i18n/de.json" @asked))
+                        (is (= {"a/one" "Eins"} catalog))))
+               (.finally (fn [] (set! (.-fetch js/globalThis) fetch) (done)))))))

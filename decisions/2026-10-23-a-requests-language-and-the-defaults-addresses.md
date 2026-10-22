@@ -1,3 +1,5 @@
+> **Changed in part** by [Texts are ICU messages in a flat JSON catalog per language, read by both sides](2026-10-23-texts-are-icu-messages-in-a-json-catalog-per-language.md) (2026-10-23, v0.2.0): the languages read from a prefix, the cookie and Accept-Language are the ones that show: the launched `:languages` and this environment's `:preview-languages`.
+
 # A request's language: the prefix, the cookie, Accept-Language, the default; the default's addresses carry no prefix
 
 > The user's decision, 2026-10-23 (the order); the prefix rule decided in building v0.1.0. As Groundwork v0.5.0 did.

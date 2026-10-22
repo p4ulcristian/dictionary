@@ -1,0 +1,4 @@
+{
+  "orders.cart/add": "{count, plural, one {# Artikel} other {# Artikel}} hinzufügen",
+  "sizes/small": "Klein (<30cm)"
+}

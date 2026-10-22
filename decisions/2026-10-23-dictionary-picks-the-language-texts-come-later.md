@@ -1,3 +1,5 @@
+> **Changed in part** by [Texts are ICU messages in a flat JSON catalog per language, read by both sides](2026-10-23-texts-are-icu-messages-in-a-json-catalog-per-language.md) (2026-10-23, v0.2.0): the texts are here: ICU messages in a JSON catalog per language, read by both sides.
+
 # dictionary picks the language; texts come later
 
 > The user's decision, 2026-10-23. Carries over Groundwork v0.5.0's `groundwork.web.languages` (house's tag v0.5.0) and its browser routing's languages.

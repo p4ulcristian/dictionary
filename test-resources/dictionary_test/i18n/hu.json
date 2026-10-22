@@ -1,0 +1,5 @@
+{
+  "orders.cart/add": "{count} tétel hozzáadása",
+  "orders.cart/title": "Kosár",
+  "sizes/small": "Kicsi (<30cm)"
+}

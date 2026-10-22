@@ -2,9 +2,12 @@
   "The request's language, and the page's addresses in every language: the
    server's side. The browser's is this namespace's .cljs half.
 
-     (def settings (dictionary/check-settings {:languages   [\"en\" \"de\"]
-                                               :default     \"en\"      ; its addresses carry no prefix
-                                               :cookie-name \"lang\"})) ; or nil
+     (def settings (dictionary/check-settings {:languages         [\"en\" \"de\"]  ; launched
+                                               :default           \"en\"         ; its addresses carry no prefix
+                                               :cookie-name       \"lang\"       ; or nil
+                                               :preview-languages []           ; those that show here too: [\"hu\"] on a stage
+                                               :fallback-language \"en\"         ; a message missing from a catalog
+                                               :catalogs-path     \"i18n\"}))    ; i18n/<language>.json, on the classpath
 
      (dictionary/find-language-of-request settings request)
      ;=> {:language \"de\" :path \"/orders\"}   ; for /de/orders, or /orders with a German browser
@@ -14,13 +17,19 @@
      ;    {:hreflang \"x-default\" :href \"https://shop.example/orders\"}]
      (dictionary/make-path-in-language settings \"/orders\" \"de\")   ;=> \"/de/orders\"
 
+     ;; the texts: ICU MessageFormat messages, a flat JSON catalog per language
+     (def texts (dictionary/load-texts settings))   ; once, at the start
+     (dictionary/make-text texts \"de\" :orders.cart/add {:count 3})   ; the language is a value: an email's, a PDF's
+
    A request's language: the address's prefix (with more than one
    language), then the cookie the settings name, then Accept-Language, then
-   the default. dictionary picks the language; the page's texts in it come
-   later. The settings are checked once, by check-settings, before the app
-   starts; the functions trust them."
+   the default. A message in a language: its catalog's, else the fallback
+   language's, else the key's name, ugly on purpose. The settings are
+   checked once, by check-settings, before the app starts; the functions
+   trust them."
   (:require
    [dictionary.addresses :as addresses]
+   [dictionary.catalogs :as catalogs]
    [dictionary.requests :as requests]
    [dictionary.settings :as settings]))
 
@@ -59,3 +68,44 @@
    carries none, /orders."
   [settings path language]
   (addresses/make-path-in-language settings path language))
+
+(defn list-live-languages
+  "The languages that show here: the launched :languages, then the
+   :preview-languages this environment shows."
+  [settings]
+  (settings/list-live-languages settings))
+
+;; -----------------------------------------------------------------------------
+;; Texts
+
+(defn list-catalog-files
+  "Every language that shows, its catalog's classpath resource and the
+   address the browser fetches it at: [{:language \"de\" :resource
+   \"i18n/de.json\" :address \"/i18n/de.json\"} …], for the app's server
+   to serve."
+  [settings]
+  (catalogs/list-catalog-files settings))
+
+(defn load-texts
+  "Every language that shows, its catalog read from the classpath:
+   {:fallback-language … :catalogs {language {key message}}}. A catalog
+   that isn't there throws, :dictionary/missing-catalogs."
+  [settings]
+  (catalogs/load-texts settings))
+
+(defn make-text
+  "The key's ICU message in the language (a value: the request's, or the
+   row's an email or a PDF is made for), args filled in ({} for none),
+   by ICU4J; the fallback language's when the language's catalog lacks
+   it; the key's name, \"orders.cart/add\", when neither has it."
+  [texts language message-key args]
+  (catalogs/make-text texts language message-key args))
+
+(defn find-problems-in-catalogs
+  "For an app's test: every key in every language, every message ICU can
+   read. {} when so; else by language :missing-keys and :bad-messages,
+   and :missing-catalogs.
+
+     (is (= {} (dictionary/find-problems-in-catalogs settings)))"
+  [settings]
+  (catalogs/find-problems-in-catalogs settings))

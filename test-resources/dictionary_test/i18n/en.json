@@ -1,0 +1,5 @@
+{
+  "orders.cart/add": "Add {count, plural, one {# item} other {# items}}",
+  "orders.cart/title": "Cart",
+  "sizes/small": "Small (<30cm)"
+}

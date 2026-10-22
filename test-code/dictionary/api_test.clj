@@ -7,14 +7,16 @@
    [dictionary.api :as dictionary]))
 
 (def ^:private settings
-  (dictionary/check-settings {:languages ["en" "de" "hu"] :default "en" :cookie-name "lang"}))
+  (dictionary/check-settings {:languages ["en" "de"] :default "en" :cookie-name "lang"
+                              :preview-languages ["hu"] :fallback-language "en" :catalogs-path "dictionary_test/i18n"}))
 
 (defn- make-request [uri headers]
   {:uri uri :headers headers})
 
 (deftest the-names-of-the-api
   (is (= '#{settings-shape check-settings find-language-of-request make-alternate-links
-            split-language-from-path make-path-in-language}
+            split-language-from-path make-path-in-language list-live-languages
+            list-catalog-files load-texts make-text find-problems-in-catalogs}
          (set (keys (ns-publics 'dictionary.api))))))
 
 (deftest a-requests-language
@@ -40,7 +42,7 @@
     (is (= "en" (:language (dictionary/find-language-of-request (assoc settings :cookie-name nil)
                                                                 (make-request "/orders" {"cookie" "lang=hu"}))))))
   (testing "one language: every request is in it, and no prefix is taken"
-    (let [one {:languages ["hu"] :default "hu" :cookie-name nil}]
+    (let [one {:languages ["hu"] :default "hu" :cookie-name nil :preview-languages [] :fallback-language "hu" :catalogs-path "i18n"}]
       (is (= {:language "hu" :path "/de/orders"}
              (dictionary/find-language-of-request one (make-request "/de/orders" {"accept-language" "de"})))))))
 
@@ -53,15 +55,55 @@
   (is (= ["https://shop.example/" "https://shop.example/de" "https://shop.example/hu" "https://shop.example/"]
          (map :href (dictionary/make-alternate-links settings "https://shop.example" "/")))
       "the home page")
-  (is (= [] (dictionary/make-alternate-links {:languages ["hu"] :default "hu" :cookie-name nil} "https://x" "/"))
+  (is (= [] (dictionary/make-alternate-links {:languages ["hu"] :default "hu" :cookie-name nil :preview-languages []
+                                              :fallback-language "hu" :catalogs-path "i18n"} "https://x" "/"))
       "none with one language"))
 
 (deftest the-settings-are-checked
   (let [errors (try (dictionary/check-settings {:languages ["en" "De"] :colour "red"})
                     (catch clojure.lang.ExceptionInfo e (:errors (ex-data e))))]
-    (is (= #{:languages :default :cookie-name :colour} (set (keys errors))) "every problem at once"))
-  (is (thrown? clojure.lang.ExceptionInfo
-               (dictionary/check-settings {:languages ["en" "de"] :default "hu" :cookie-name nil}))
-      "the default is one of the languages")
-  (is (thrown? clojure.lang.ExceptionInfo
-               (dictionary/check-settings {:languages ["en" "en"] :default "en" :cookie-name nil}))))
+    (is (= #{:languages :default :cookie-name :preview-languages :fallback-language :catalogs-path :colour} (set (keys errors)))
+        "every problem at once"))
+  (let [complete {:languages ["en" "de"] :default "en" :cookie-name nil :preview-languages ["hu"]
+                  :fallback-language "en" :catalogs-path "i18n"}]
+    (is (= complete (dictionary/check-settings complete)))
+    (is (thrown? clojure.lang.ExceptionInfo (dictionary/check-settings (assoc complete :default "hu")))
+        "the default is a launched language")
+    (is (thrown? clojure.lang.ExceptionInfo (dictionary/check-settings (assoc complete :fallback-language "fr")))
+        "the fallback is a language that shows")
+    (is (thrown? clojure.lang.ExceptionInfo (dictionary/check-settings (assoc complete :preview-languages ["de"])))
+        "each language once")
+    (is (thrown? clojure.lang.ExceptionInfo (dictionary/check-settings (assoc complete :catalogs-path "/i18n/"))))))
+
+(deftest preview-languages-show-only-where-the-settings-say
+  (is (= "hu" (:language (dictionary/find-language-of-request settings (make-request "/hu/orders" {}))))
+      "shown here: its prefix is read")
+  (let [production (assoc settings :preview-languages [] :catalogs-path "dictionary_test/i18n")]
+    (is (= {:language "en" :path "/hu/orders"} (dictionary/find-language-of-request production (make-request "/hu/orders" {"accept-language" "hu"})))
+        "not shown: neither its prefix nor Accept-Language")
+    (is (= ["en" "de"] (map :hreflang (butlast (dictionary/make-alternate-links production "https://x" "/")))))))
+
+(deftest texts-in-a-language
+  (let [texts (dictionary/load-texts settings)]
+    (is (= ["en" "de" "hu"] (map :language (dictionary/list-catalog-files settings))))
+    (is (= "/dictionary_test/i18n/de.json" (:address (second (dictionary/list-catalog-files settings)))))
+    (is (= "Add 3 items" (dictionary/make-text texts "en" :orders.cart/add {:count 3})))
+    (is (= "1 Artikel hinzufügen" (dictionary/make-text texts "de" :orders.cart/add {:count 1})) "the language's plural rules")
+    (is (= "Cart" (dictionary/make-text texts "de" :orders.cart/title {})) "missing in German: the fallback's")
+    (is (= "orders.cart/nowhere" (dictionary/make-text texts "de" :orders.cart/nowhere {})) "missing everywhere: the key's name")
+    (is (= "Klein (<30cm)" (dictionary/make-text texts "de" :sizes/small {})) "a < is text")
+    (is (= "Kosár" (dictionary/make-text texts "hu" :orders.cart/title {})))))
+
+(deftest a-catalog-that-isnt-there-is-named
+  (is (= {:type :dictionary/missing-catalogs :resources ["dictionary_test/i18n/fr.json"]}
+         (try (dictionary/load-texts (assoc settings :preview-languages ["hu" "fr"]))
+              (catch clojure.lang.ExceptionInfo e (ex-data e))))))
+
+(deftest the-catalogs-are-kept-complete
+  (is (= {} (dictionary/find-problems-in-catalogs (assoc settings :languages ["en" "hu"] :preview-languages []))))
+  (let [problems (dictionary/find-problems-in-catalogs {:languages ["en" "de"] :default "en" :cookie-name nil :preview-languages ["fr"]
+                                                        :fallback-language "en" :catalogs-path "dictionary_test/gaps"})]
+    (is (= ["a/three"] (get-in problems ["en" :missing-keys])))
+    (is (= ["a/two"] (get-in problems ["de" :missing-keys])) "every key in every language")
+    (is (contains? (get-in problems ["en" :bad-messages]) "a/two") "ICU can't read it")
+    (is (= ["dictionary_test/gaps/fr.json"] (:missing-catalogs problems)))))

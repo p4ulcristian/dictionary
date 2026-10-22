@@ -1,7 +1,10 @@
 {
   "name": "dictionary",
   "private": true,
-  "description": "dictionary's ClojureScript test build",
+  "description": "dictionary's ClojureScript test build; intl-messageformat makes a message into text in the browser",
+  "dependencies": {
+    "intl-messageformat": "12.1.3"
+  },
   "scripts": {
     "test": "shadow-cljs compile test"
   },
