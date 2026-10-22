@@ -1,0 +1,18 @@
+;; dictionary: the request's language, and the page's in every language.
+;; One tree for both languages: source-code/dictionary/, the server's .clj and
+;; the browser's .cljs beside the .cljc both share.
+{:paths ["source-code"]
+
+ :deps
+ {;; the settings, checked before anything is read
+  metosin/malli {:mvn/version "0.20.3"}}
+
+ :aliases
+ {;; the JVM tests:  clojure -X:test
+  :test {:extra-paths ["test-code"]
+         :extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :exec-fn     cognitect.test-runner.api/test
+         :exec-args   {:dirs ["test-code"]}}
+  ;; the browser tests, through shadow-cljs:  npm install && npx shadow-cljs compile test
+  :cljs {:extra-paths ["test-code"]
+         :extra-deps  {thheller/shadow-cljs {:mvn/version "3.5.7"}}}}}

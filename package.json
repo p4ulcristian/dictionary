@@ -1,0 +1,11 @@
+{
+  "name": "dictionary",
+  "private": true,
+  "description": "dictionary's ClojureScript test build",
+  "scripts": {
+    "test": "shadow-cljs compile test"
+  },
+  "devDependencies": {
+    "shadow-cljs": "3.5.7"
+  }
+}
