@@ -8,7 +8,7 @@ language from an address and makes an address in a language. The texts of
 a page in that language come later.
 
 ```clojure
-io.github.p4ulcristian/dictionary {:git/tag "v0.1.0" :git/sha "…"}
+io.github.p4ulcristian/dictionary {:git/tag "v0.1.0" :git/sha "3934a19"}
 ```
 
 Needs only malli. One public namespace, `dictionary.api`: a `.clj` for the
