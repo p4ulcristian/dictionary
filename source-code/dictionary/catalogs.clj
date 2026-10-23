@@ -59,6 +59,14 @@
    nil outside, where tr throws."
   nil)
 
+(defn read-bound-language
+  "The language bound by with-language; throws :dictionary/no-language
+   when none is."
+  []
+  (or (:language *bound*)
+      (throw (ex-info "No language bound: read inside with-language (groundwork binds the request's)"
+                      {:type :dictionary/no-language}))))
+
 (defn make-bound-text
   "The key's message in the bound language (make-text's); throws
    :dictionary/no-language, naming the key, when none is bound."

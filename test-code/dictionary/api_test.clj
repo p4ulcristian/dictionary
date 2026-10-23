@@ -16,7 +16,7 @@
 (deftest the-names-of-the-api
   (is (= '#{settings-shape check-settings find-language-of-request make-alternate-links
             split-language-from-path make-path-in-language list-live-languages list-languages-to-pick
-            list-catalog-files load-texts make-text with-language tr find-problems-in-catalogs}
+            list-catalog-files load-texts make-text with-language tr read-bound-language find-problems-in-catalogs}
          (set (keys (ns-publics 'dictionary.api))))))
 
 (deftest a-requests-language
@@ -137,4 +137,6 @@
     (is (= {:type :dictionary/no-language :key :orders.cart/add}
            (try (dictionary/tr :orders.cart/add {:count 3})
                 (catch clojure.lang.ExceptionInfo e (ex-data e))))
-        "none bound: an error, not a language nobody chose")))
+        "none bound: an error, not a language nobody chose")
+    (is (= "de" (dictionary/with-language texts "de" (dictionary/read-bound-language))))
+    (is (= :dictionary/no-language (try (dictionary/read-bound-language) (catch clojure.lang.ExceptionInfo e (:type (ex-data e))))))))

@@ -135,6 +135,13 @@
   [message-key args]
   (catalogs/make-bound-text message-key args))
 
+(defn read-bound-language
+  "The language bound around the caller (with-language), for what isn't a
+   text: <html lang>, the language an order is saved in. Throws
+   :dictionary/no-language when none is bound."
+  []
+  (catalogs/read-bound-language))
+
 (defn find-problems-in-catalogs
   "For an app's test: every key in every language, every message ICU can
    read. {} when so; else by language :missing-keys and :bad-messages,
