@@ -1,3 +1,5 @@
+> **Changed in part** by [Each language carries its own name; flags are the app's](2026-10-23-each-language-carries-its-own-name.md) (2026-10-23, v0.3.0): a language in `:languages` and `:preview-languages` is `{:code :name}`; the settings example's tags are maps now.
+
 # Texts are ICU messages in a flat JSON catalog per language, read by both sides
 
 > **Changed in part** by [The family and its composer are groundwork](https://github.com/p4ulcristian/groundwork/blob/Starting-from-the-bottom/decisions/2026-10-23-the-family-and-its-composer-are-groundwork.md) (2026-10-23): manor, the family, and house, the composer, are both named groundwork now.

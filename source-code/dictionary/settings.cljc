@@ -11,17 +11,32 @@
   [:re {:error/message "should be a language tag in lowercase: \"en\", \"de\", \"pt-br\""}
    #"^[a-z]{2,3}(-[a-z0-9]{2,8})*$"])
 
-(defn list-live-languages
-  "The languages that show here: the launched :languages, then the
-   :preview-languages this environment shows."
+(def ^:private language
+  [:map {:closed true}
+   [:code language-tag]
+   [:name [:string {:min 1 :error/message "should be the language's name in itself: \"Deutsch\""}]]])
+
+(defn list-languages-to-pick
+  "The languages that show here, {:code :name} each: the launched
+   :languages, then the :preview-languages this environment shows, in the
+   settings' order."
   [{:keys [languages preview-languages]}]
   (into (vec languages) preview-languages))
 
+(defn list-live-languages
+  "The tags of the languages that show here: the launched :languages,
+   then the :preview-languages this environment shows."
+  [settings]
+  (mapv :code (list-languages-to-pick settings)))
+
+(defn- is-list-of-languages? [languages]
+  (and (vector? languages) (every? #(and (map? %) (string? (:code %))) languages)))
+
 (defn- are-both-lists? [{:keys [languages preview-languages]}]
-  (and (vector? languages) (vector? preview-languages)))
+  (and (is-list-of-languages? languages) (is-list-of-languages? preview-languages)))
 
 (defn- is-default-one-of-the-languages? [{:keys [languages default]}]
-  (or (not (vector? languages)) (not (string? default)) (some #{default} languages)))
+  (or (not (is-list-of-languages? languages)) (not (string? default)) (some #{default} (map :code languages))))
 
 (defn- is-fallback-a-live-language? [{:keys [fallback-language] :as settings}]
   (or (not (are-both-lists? settings)) (not (string? fallback-language))
@@ -33,27 +48,32 @@
 
 (def settings-shape
   "The settings, every key required.
-   :languages: the app's languages, as lowercase tags, [\"en\" \"de\"].
-   :default: one of them: the language whose addresses have no prefix
-   (/orders, while German's are /de/orders), and the one a request is in
-   when nothing else says.
+   :languages: the app's launched languages, each its lowercase tag and
+   its name in itself, [{:code \"en\" :name \"English\"} {:code \"de\"
+   :name \"Deutsch\"}], in the order a language menu lists them (a flag,
+   or any other look of the menu, is the app's).
+   :default: one of their tags: the language whose addresses have no
+   prefix (/orders, while German's are /de/orders), and the one a request
+   is in when nothing else says.
    :cookie-name: the cookie a person's chosen language is read from (the
    app writes it), or nil for none.
    :preview-languages: languages not launched yet that show here, in this
-   environment (a stage where translators review them), [] for none (a
-   production that shows only the launched ones). A language that shows
-   is read from addresses, cookies and Accept-Language, and has a catalog.
-   :fallback-language: the language whose text a message missing from
-   another catalog is given in; one of the languages that show.
+   environment (a stage where translators review them), each as in
+   :languages, [] for none (a production that shows only the launched
+   ones). A language that shows is read from addresses, cookies and
+   Accept-Language, and has a catalog.
+   :fallback-language: the tag of the language whose text a message
+   missing from another catalog is given in; one of the languages that
+   show.
    :catalogs-path: where the catalogs are, \"i18n\": each language's
    <catalogs-path>/<language>.json, a classpath resource for the server,
    and the same file at /<catalogs-path>/<language>.json for the browser."
   [:and
    [:map {:closed true}
-    [:languages [:vector {:min 1} language-tag]]
+    [:languages [:vector {:min 1} language]]
     [:default language-tag]
     [:cookie-name [:maybe [:string {:min 1}]]]
-    [:preview-languages [:vector language-tag]]
+    [:preview-languages [:vector language]]
     [:fallback-language language-tag]
     [:catalogs-path [:re {:error/message "should be a folder's path, \"i18n\" or \"app/i18n\", no / at either end"}
                      #"^[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$"]]]

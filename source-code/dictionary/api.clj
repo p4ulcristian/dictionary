@@ -2,12 +2,13 @@
   "The request's language, and the page's addresses in every language: the
    server's side. The browser's is this namespace's .cljs half.
 
-     (def settings (dictionary/check-settings {:languages         [\"en\" \"de\"]  ; launched
-                                               :default           \"en\"         ; its addresses carry no prefix
-                                               :cookie-name       \"lang\"       ; or nil
-                                               :preview-languages []           ; those that show here too: [\"hu\"] on a stage
-                                               :fallback-language \"en\"         ; a message missing from a catalog
-                                               :catalogs-path     \"i18n\"}))    ; i18n/<language>.json, on the classpath
+     (def settings (dictionary/check-settings {:languages         [{:code \"en\" :name \"English\"}   ; launched
+                                                                {:code \"de\" :name \"Deutsch\"}]
+                                               :default           \"en\"     ; its addresses carry no prefix
+                                               :cookie-name       \"lang\"   ; or nil
+                                               :preview-languages []       ; those that show here too: [{:code \"hu\" :name \"Magyar\"}] on a stage
+                                               :fallback-language \"en\"     ; a message missing from a catalog
+                                               :catalogs-path     \"i18n\"})) ; i18n/<language>.json, on the classpath
 
      (dictionary/find-language-of-request settings request)
      ;=> {:language \"de\" :path \"/orders\"}   ; for /de/orders, or /orders with a German browser
@@ -16,6 +17,8 @@
      ;    {:hreflang \"de\" :href \"https://shop.example/de/orders\"}
      ;    {:hreflang \"x-default\" :href \"https://shop.example/orders\"}]
      (dictionary/make-path-in-language settings \"/orders\" \"de\")   ;=> \"/de/orders\"
+     (dictionary/list-languages-to-pick settings)
+     ;=> [{:code \"en\" :name \"English\"} {:code \"de\" :name \"Deutsch\"}]   ; a language menu's
 
      ;; the texts: ICU MessageFormat messages, a flat JSON catalog per language
      (def texts (dictionary/load-texts settings))   ; once, at the start
@@ -34,8 +37,9 @@
    [dictionary.settings :as settings]))
 
 (def settings-shape
-  "The settings, every key required: {:languages [\"en\" \"de\"] :default
-   \"en\" :cookie-name \"lang\"} (see dictionary.settings)."
+  "The settings, every key required: {:languages [{:code \"en\" :name
+   \"English\"} {:code \"de\" :name \"Deutsch\"}] :default \"en\"
+   :cookie-name \"lang\" …} (see dictionary.settings)."
   settings/settings-shape)
 
 (defn check-settings
@@ -70,10 +74,17 @@
   (addresses/make-path-in-language settings path language))
 
 (defn list-live-languages
-  "The languages that show here: the launched :languages, then the
-   :preview-languages this environment shows."
+  "The tags of the languages that show here: the launched :languages,
+   then the :preview-languages this environment shows."
   [settings]
   (settings/list-live-languages settings))
+
+(defn list-languages-to-pick
+  "What a language menu lists: the languages that show here, in the
+   settings' order, each its tag and its name in itself, [{:code \"en\"
+   :name \"English\"} {:code \"de\" :name \"Deutsch\"} …]."
+  [settings]
+  (settings/list-languages-to-pick settings))
 
 ;; -----------------------------------------------------------------------------
 ;; Texts

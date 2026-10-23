@@ -7,6 +7,7 @@
      (dictionary/find-language-of-path settings \"/de/orders\" \"en\")   ;=> \"de\"
      (dictionary/find-language-of-path settings \"/orders\" \"de\")      ;=> \"de\": no prefix, the page's
      (dictionary/make-path-in-language settings \"/orders\" \"de\")      ;=> \"/de/orders\"
+     (dictionary/list-languages-to-pick settings)   ;=> [{:code \"en\" :name \"English\"} …], a language menu's
 
      ;; the texts: the catalogs fetched from the server, the same files it reads
      (-> (dictionary/fetch-catalog! settings \"de\") (.then (fn [catalog] …)))
@@ -21,8 +22,9 @@
    [dictionary.settings :as settings]))
 
 (def settings-shape
-  "The settings, every key required: {:languages [\"en\" \"de\"] :default
-   \"en\" :cookie-name \"lang\"} (see dictionary.settings)."
+  "The settings, every key required: {:languages [{:code \"en\" :name
+   \"English\"} {:code \"de\" :name \"Deutsch\"}] :default \"en\"
+   :cookie-name \"lang\" …} (see dictionary.settings)."
   settings/settings-shape)
 
 (defn check-settings
@@ -51,10 +53,17 @@
   (addresses/make-path-in-language settings path language))
 
 (defn list-live-languages
-  "The languages that show here: the launched :languages, then the
-   :preview-languages this environment shows."
+  "The tags of the languages that show here: the launched :languages,
+   then the :preview-languages this environment shows."
   [settings]
   (settings/list-live-languages settings))
+
+(defn list-languages-to-pick
+  "What a language menu lists: the languages that show here, in the
+   settings' order, each its tag and its name in itself, [{:code \"en\"
+   :name \"English\"} {:code \"de\" :name \"Deutsch\"} …]."
+  [settings]
+  (settings/list-languages-to-pick settings))
 
 (defn fetch-catalog!
   "A promise of a language's catalog, {\"orders.cart/add\" \"…\"}, from

@@ -6,7 +6,7 @@
    [dictionary.api :as dictionary]))
 
 (def ^:private settings
-  (dictionary/check-settings {:languages ["en" "de"] :default "en" :cookie-name nil
+  (dictionary/check-settings {:languages [{:code "en" :name "English"} {:code "de" :name "Deutsch"}] :default "en" :cookie-name nil
                               :preview-languages [] :fallback-language "en" :catalogs-path "i18n"}))
 
 (deftest the-language-of-an-address
@@ -20,6 +20,9 @@
   (is (= "/de/orders" (dictionary/make-path-in-language settings "/orders" "de")))
   (is (= "/orders" (dictionary/make-path-in-language settings "/orders" "en")) "the default carries none")
   (is (= "/de" (dictionary/make-path-in-language settings "/" "de")) "the home page"))
+
+(deftest the-languages-a-menu-lists
+  (is (= [{:code "en" :name "English"} {:code "de" :name "Deutsch"}] (dictionary/list-languages-to-pick settings))))
 
 (deftest the-settings-are-checked
   (is (= :dictionary/bad-settings
