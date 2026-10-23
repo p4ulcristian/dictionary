@@ -34,6 +34,7 @@ server, a `.cljs` for the browser.
 | server | `with-language` `tr` `read-bound-language` | texts and a language bound around a body, both checked first (`:dictionary/bad-texts`, `:dictionary/bad-language`); `(tr :key args)` in it, and the language itself (`<html lang>`); an error where none is bound |
 | server | `list-catalog-files` | each catalog's classpath resource and the address the browser fetches it at |
 | server | `find-problems-in-catalogs` | for a test: every key in every language, every message ICU reads |
+| server | `check-texts-of-reasons` | for the start: every reason a refusal may give (bridge's named refusals: the handlers' and the libraries'), `{reason data-shape}`, has its text in every catalog, naming only arguments its data carries; else `:dictionary/missing-texts`, every problem at once ([why](https://github.com/p4ulcristian/bridge/blob/tidy-up/decisions/2026-10-23-a-refusal-is-a-named-reason-declared-on-its-handler.md)) |
 | browser | `fetch-catalog!` `make-text` | a language's catalog from the server; a message in a language |
 
 ```clojure
@@ -65,6 +66,11 @@ server, a `.cljs` for the browser.
   (dictionary/tr :orders.cart/add {:count 3}))                  ;=> "3 Artikel hinzufügen"
 (dictionary/tr :orders.cart/add {:count 3})                     ; none bound: throws :dictionary/no-language
 (is (= {} (dictionary/find-problems-in-catalogs settings)))      ; in the app's tests
+;; at the start: each refusal's reason is a text's key, its data the text's arguments,
+;; named without their namespace, a - read as _ (ICU's names take no -)
+(dictionary/check-texts-of-reasons texts {:bridge/too-many       [:map [:retry-after-ms :int]]   ; "Try again in {retry_after_ms} ms."
+                                          :order/already-shipped [:map [:order/shipped-at :time/instant]]
+                                          :order/no-address      nil})                            ; a text with no arguments
 
 ;; in the browser
 (dictionary/find-language-of-path settings "/orders" "de")   ;=> "de", the page's

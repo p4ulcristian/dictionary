@@ -100,6 +100,51 @@
                      (catch Exception e [k (ex-message e)]))))
         catalog))
 
+(defn- find-argument-names
+  "The names of the data a reason's shape carries, as its message names
+   them: nil for no data, the keys of a [:map …] written as a vector; nil
+   for :any-name (unknown) when the shape is anything else."
+  [shape]
+  (cond (nil? shape) #{}
+        (and (vector? shape) (= :map (first shape)))
+        (set (for [entry (rest shape) :when (vector? entry)] (texts/turn-key-into-argument-name (first entry))))
+        :else :any-name))
+
+(defn- find-problems-of-reason
+  "{:missing-texts [reason]}, {:unknown-arguments {reason [names]}} or
+   {:bad-messages {reason why}} for one reason in one catalog; nil when
+   its message is there and names only what its data carries."
+  [language catalog [reason shape]]
+  (if-let [message (get catalog (texts/turn-key-into-catalog-key reason))]
+    (let [known (find-argument-names shape)]
+      (try (let [named   (set (.getArgumentNames (MessageFormat. ^String message (ULocale. ^String language))))
+                 unknown (when (set? known) (sort (remove known named)))]
+             (when (seq unknown) {:unknown-arguments {reason (vec unknown)}}))
+           (catch Exception e {:bad-messages {reason (ex-message e)}})))
+    {:missing-texts [reason]}))
+
+(defn find-reasons-without-texts
+  "{} when every reason has its text in every catalog of texts
+   (load-texts's: every language that shows), and each text names only
+   arguments its reason's data carries; else by language :missing-texts,
+   :unknown-arguments and :bad-messages."
+  [{:keys [catalogs]} reasons]
+  (into {}
+        (keep (fn [[language catalog]]
+                (let [problems (apply merge-with into {} (keep #(find-problems-of-reason language catalog %) (sort-by (comp str key) reasons)))]
+                  (when (seq problems) [language problems]))))
+        catalogs))
+
+(defn check-texts-of-reasons
+  "Returns reasons; throws :dictionary/missing-texts with every problem at
+   once (find-reasons-without-texts's) when one lacks a text."
+  [texts reasons]
+  (let [problems (find-reasons-without-texts texts reasons)]
+    (when (seq problems)
+      (throw (ex-info (str "Some reasons have no text in every language: " (pr-str problems))
+                      {:type :dictionary/missing-texts :problems problems})))
+    reasons))
+
 (defn find-problems-in-catalogs
   "For an app's test, so catalogs stay complete before they ship: every
    key in every language. {} when there are none; else by language, the

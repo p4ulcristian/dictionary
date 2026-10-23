@@ -16,7 +16,8 @@
 (deftest the-names-of-the-api
   (is (= '#{settings-shape check-settings find-language-of-request make-alternate-links
             split-language-from-path make-path-in-language list-live-languages list-languages-to-pick
-            list-catalog-files load-texts make-text with-language tr read-bound-language find-problems-in-catalogs}
+            list-catalog-files load-texts make-text with-language tr read-bound-language find-problems-in-catalogs
+            check-texts-of-reasons}
          (set (keys (ns-publics 'dictionary.api))))))
 
 (deftest a-requests-language
@@ -147,3 +148,41 @@
                 (catch clojure.lang.ExceptionInfo e (:type (ex-data e))))))
     (is (= "de" (dictionary/with-language texts "de" (dictionary/read-bound-language))))
     (is (= :dictionary/no-language (try (dictionary/read-bound-language) (catch clojure.lang.ExceptionInfo e (:type (ex-data e))))))))
+
+(def ^:private reason-texts
+  {:fallback-language "en"
+   :catalogs          {"en" {"order/already-shipped" "Shipped on {shipped_at}."
+                             "order/no-address"      "This order has no address."
+                             "bridge/too-many"       "Too many: try again in {retry_after_ms, number} ms."}
+                       "de" {"order/already-shipped" "Am {shipped_at} verschickt."
+                             "bridge/too-many"       "Zu viele, {seconds}."}}})
+
+(def ^:private reasons
+  {:order/already-shipped [:map [:order/shipped-at :time/instant]]
+   :order/no-address      nil
+   :bridge/too-many       [:map {:closed true} [:retry-after-ms :int]]})
+
+(deftest every-reason-has-a-text-in-every-language
+  (is (= reasons (dictionary/check-texts-of-reasons (update reason-texts :catalogs dissoc "de") reasons))
+      "every reason in every catalog, each naming only what its data carries")
+  (let [{:keys [type problems]} (try (dictionary/check-texts-of-reasons reason-texts reasons)
+                                     (catch clojure.lang.ExceptionInfo e (ex-data e)))]
+    (is (= :dictionary/missing-texts type))
+    (is (= {"de" {:missing-texts [:order/no-address] :unknown-arguments {:bridge/too-many ["seconds"]}}} problems)
+        "German lacks one, and names an argument the reason's data doesn't carry; the fallback doesn't count"))
+  (testing "a reason of no data whose text names one; a text ICU can't read"
+    (is (= {"en" {:unknown-arguments {:order/no-address ["street"]} :bad-messages {:order/already-shipped "x"}}}
+           (-> (try (dictionary/check-texts-of-reasons {:fallback-language "en"
+                                                        :catalogs {"en" {"order/no-address" "No {street}."
+                                                                         "order/already-shipped" "Shipped {broken"
+                                                                         "bridge/too-many" "Later."}}}
+                                                       reasons)
+                    (catch clojure.lang.ExceptionInfo e (ex-data e)))
+               :problems
+               (update-in ["en" :bad-messages] update-vals (constantly "x")))))))
+
+(deftest a-reasons-data-are-its-texts-arguments
+  (testing "the key's name without its namespace, - read as _: ICU's names take no -"
+    (is (= "Too many: try again in 1,500 ms."
+           (dictionary/make-text reason-texts "en" :bridge/too-many {:retry-after-ms 1500})))
+    (is (= "Shipped on today." (dictionary/make-text reason-texts "en" :order/already-shipped {:order/shipped-at "today"})))))

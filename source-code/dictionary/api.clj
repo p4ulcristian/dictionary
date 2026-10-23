@@ -108,7 +108,9 @@
 
 (defn make-text
   "The key's ICU message in the language (a value: the request's, or the
-   row's an email or a PDF is made for), args filled in ({} for none),
+   row's an email or a PDF is made for), args filled in ({} for none; a
+   key names its argument without its namespace, a - read as _:
+   {:retry-after-ms 3} fills {retry_after_ms}),
    by ICU4J; the fallback language's when the language's catalog lacks
    it; the key's name, \"orders.cart/add\", when neither has it."
   [texts language message-key args]
@@ -143,6 +145,25 @@
    :dictionary/no-language when none is bound."
   []
   (catalogs/read-bound-language))
+
+(defn check-texts-of-reasons
+  "For the start: every reason a refusal may give (bridge's named
+   refusals: the handlers' :refusals and the libraries' own, bridge's and
+   doorman's), {reason data-shape}, has its text in every catalog of
+   texts (load-texts's: every language that shows); the reason is the
+   text's key and its data the text's arguments ({retry_after_ms} for
+   :retry-after-ms: turn-args-into-names). Throws
+   {:type :dictionary/missing-texts :problems {language {…}}} with every
+   problem at once: :missing-texts, the reasons a catalog lacks;
+   :unknown-arguments, by reason, the arguments a text names that its
+   reason's data doesn't carry (checked for a nil shape, which carries
+   none, and a [:map …]); :bad-messages, by reason, a text ICU can't read.
+   Returns reasons.
+
+     (dictionary/check-texts-of-reasons texts (merge bridge/refusals doorman/refusals
+                                                     (apply merge (map :refusals (vals handlers)))))"
+  [texts reasons]
+  (catalogs/check-texts-of-reasons texts reasons))
 
 (defn find-problems-in-catalogs
   "For an app's test: every key in every language, every message ICU can

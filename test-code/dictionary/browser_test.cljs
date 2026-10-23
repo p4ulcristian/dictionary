@@ -42,6 +42,11 @@
   (is (= "orders.cart/nowhere" (dictionary/make-text texts "de" :orders.cart/nowhere {})) "missing everywhere: the key's name")
   (is (= "Small (<30cm)" (dictionary/make-text texts "en" :sizes/small {})) "a < is text, as on the server"))
 
+(deftest a-reasons-data-are-its-texts-arguments
+  (is (= "Try again in 1500 ms." (dictionary/make-text {:fallback-language "en" :catalogs {"en" {"bridge/too-many" "Try again in {retry_after_ms} ms."}}}
+                                                      "en" :bridge/too-many {:retry-after-ms 1500}))
+      "the key's name, - read as _, as on the server"))
+
 (deftest a-catalog-is-fetched-from-the-same-file
   (async done
          (let [fetch  (.-fetch js/globalThis)

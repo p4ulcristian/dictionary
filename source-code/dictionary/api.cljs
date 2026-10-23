@@ -73,7 +73,9 @@
   (catalogs/fetch-catalog! settings language))
 
 (defn make-text
-  "The key's ICU message in the language, args filled in ({} for none),
+  "The key's ICU message in the language, args filled in ({} for none; a
+   key names its argument without its namespace, a - read as _:
+   {:retry-after-ms 3} fills {retry_after_ms}),
    by intl-messageformat; the fallback language's when the language's
    catalog lacks it; the key's name when neither has it. texts:
    {:fallback-language … :catalogs {language catalog}}, the catalogs
