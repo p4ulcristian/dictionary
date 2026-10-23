@@ -2,7 +2,7 @@
 
 One file per decision: `YYYY-MM-DD-what-we-decided.md`. The title is the decision. Each file says what we decided, why, and what we chose against. A decision changes by a new file; the old one says so at the top (`Replaced by` or `Changed in part by`), and nothing else in it is rewritten.
 
-dictionary is manor's languages (manor: house and the libraries it puts together). It carries over the languages of Groundwork v0.5.0, now house (its decisions are in house's `decisions/`), and the texts of Iron Rainbow's i18n.
+dictionary is groundwork's languages (groundwork: the libraries and the composer of the same name that puts them together). It carries over the languages of Groundwork v0.5.0, now the groundwork composer (its decisions are in its `decisions/`), and the texts of Iron Rainbow's i18n.
 
 ## In force
 

@@ -1,5 +1,7 @@
 # Texts are ICU messages in a flat JSON catalog per language, read by both sides
 
+> **Changed in part** by [The family and its composer are groundwork](https://github.com/p4ulcristian/groundwork/blob/Starting-from-the-bottom/decisions/2026-10-23-the-family-and-its-composer-are-groundwork.md) (2026-10-23): manor, the family, and house, the composer, are both named groundwork now.
+
 > The user's decision, 2026-10-23: carried over from Iron Rainbow's i18n (its `i18n.core`, `i18n.locale`, `i18n.locales` and its catalog test), adapted to manor's rules. Since v0.2.0. Changes in part [dictionary picks the language; texts come later](2026-10-23-dictionary-picks-the-language-texts-come-later.md) (the texts are here now) and [A request's language](2026-10-23-a-requests-language-and-the-defaults-addresses.md) (the languages read are the ones that show).
 
 **Decision:**
