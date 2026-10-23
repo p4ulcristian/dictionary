@@ -1,9 +1,10 @@
 (ns dictionary.catalogs
   "The catalogs on the server: read from the classpath, each language's
-   <catalogs-path>/<language>.json, and a message made into text by ICU4J,
-   in a language handed in as a value (make-text: an email or a PDF passes
-   the language of the row it is made for), or in the language bound
-   around the caller, *bound*, by with-language (make-bound-text, tr's)."
+   <catalogs-path>/<language>.json, and a message made into text by ICU4J
+   in the language bound around the caller, *bound*, by with-language
+   (make-bound-text, tr's). make-text, with the language as a value, is
+   what make-bound-text calls; it isn't in the api: tr is the one text
+   call."
   (:require
    [clojure.java.io :as io]
    [clojure.set :as set]
@@ -46,7 +47,7 @@
 (defn- format-message [^String message ^String language args]
   (.format (MessageFormat. message (ULocale. language)) ^Map (HashMap. ^Map (texts/turn-args-into-names args))))
 
-(defn make-text
+(defn- make-text
   "The key's message in the language, its ICU arguments filled in from
    args ({:count 3}, {} for none); in the fallback language when the
    language's catalog lacks it; the key's name when neither has it."

@@ -1,5 +1,7 @@
 # Texts are `(tr key args)`, in the language bound around them; none bound is an error
 
+> **Changed in part** by [tr is the one text call on the server](2026-10-23-tr-is-the-one-text-call-on-the-server.md) (2026-10-23, built on tidy-up, not released): its last point: `make-text` leaves the server's api and stays dictionary's inside, what `tr` calls.
+
 > The user's decision, 2026-10-23: "we want (tr ...)", on both sides, as Iron Rainbow writes it; not a mirror of Iron Rainbow's i18n. Changes in part [Texts are ICU messages in a flat JSON catalog per language](2026-10-23-texts-are-icu-messages-in-a-json-catalog-per-language.md): its "No dynamic language" and its "Instead of: a dynamic `*locale*`".
 
 **Decision:**

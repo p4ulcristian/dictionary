@@ -30,12 +30,12 @@ server, a `.cljs` for the browser.
 | both | `split-language-from-path` `make-path-in-language` | `/de/orders` ⇄ `{:language "de" :path "/orders"}` |
 | both | `list-live-languages` | the tags of the launched languages, then of the preview ones that show here |
 | both | `list-languages-to-pick` | the same languages, `{:code :name}` each, in the settings' order: what a language menu lists |
-| server | `load-texts` `make-text` | every catalog that shows, read once; a message in a language, given as a value |
-| server | `with-language` `tr` `read-bound-language` | texts and a language bound around a body, both checked first (`:dictionary/bad-texts`, `:dictionary/bad-language`); `(tr :key args)` in it, and the language itself (`<html lang>`); an error where none is bound |
+| server | `load-texts` | every catalog that shows, read once |
+| server | `with-language` `tr` `read-bound-language` | texts and a language bound around a body, both checked first (`:dictionary/bad-texts`, `:dictionary/bad-language`); `(tr :key args)` in it, the one text call on the server ([why](decisions/2026-10-23-tr-is-the-one-text-call-on-the-server.md)), and the language itself (`<html lang>`); an error where none is bound |
 | server | `list-catalog-files` | each catalog's classpath resource and the address the browser fetches it at |
 | server | `find-problems-in-catalogs` | for a test: every key in every language, every message ICU reads |
 | server | `check-texts-of-reasons` | for the start: every reason a refusal may give (bridge's named refusals: the handlers' and the libraries'), `{reason data-shape}`, has its text in every catalog, naming only arguments its data carries; else `:dictionary/missing-texts`, every problem at once ([why](https://github.com/p4ulcristian/bridge/blob/tidy-up/decisions/2026-10-23-a-refusal-is-a-named-reason-declared-on-its-handler.md)) |
-| browser | `fetch-catalog!` `make-text` | a language's catalog from the server; a message in a language |
+| browser | `fetch-catalog!` `make-text` | a language's catalog from the server; a message in a language, for parlor's `tr` (the app calls `parlor/tr`) |
 
 ```clojure
 (require '[dictionary.api :as dictionary])
@@ -59,11 +59,12 @@ server, a `.cljs` for the browser.
 ;    {:hreflang "de" :href "https://shop.example/de/orders"}
 ;    {:hreflang "x-default" :href "https://shop.example/orders"}]
 
-;; texts, on the server: the language is a value (the request's, an email's row's)
+;; texts, on the server: tr, in the language bound around it
 (def texts (dictionary/load-texts settings))
-(dictionary/make-text texts "de" :orders.cart/add {:count 3})   ;=> "3 Artikel hinzufügen"
 (dictionary/with-language texts "de"                           ; groundwork binds the request's
   (dictionary/tr :orders.cart/add {:count 3}))                  ;=> "3 Artikel hinzufügen"
+(dictionary/with-language texts (:person/language person)      ; a job's email: the person's language, read first
+  (dictionary/tr :emails.order/subject {:order 7}))
 (dictionary/tr :orders.cart/add {:count 3})                     ; none bound: throws :dictionary/no-language
 (is (= {} (dictionary/find-problems-in-catalogs settings)))      ; in the app's tests
 ;; at the start: each refusal's reason is a text's key, its data the text's arguments,

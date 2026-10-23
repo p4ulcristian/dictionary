@@ -79,6 +79,8 @@
    by intl-messageformat; the fallback language's when the language's
    catalog lacks it; the key's name when neither has it. texts:
    {:fallback-language … :catalogs {language catalog}}, the catalogs
-   fetched so far."
+   fetched so far. parlor's tr calls it, in the page's language; an app's
+   views call parlor's tr. (On the server the one text call is tr, under
+   with-language.)"
   [texts language message-key args]
   (catalogs/make-text texts language message-key args))

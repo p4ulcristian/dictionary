@@ -16,7 +16,7 @@
 (deftest the-names-of-the-api
   (is (= '#{settings-shape check-settings find-language-of-request make-alternate-links
             split-language-from-path make-path-in-language list-live-languages list-languages-to-pick
-            list-catalog-files load-texts make-text with-language tr read-bound-language find-problems-in-catalogs
+            list-catalog-files load-texts with-language tr read-bound-language find-problems-in-catalogs
             check-texts-of-reasons}
          (set (keys (ns-publics 'dictionary.api))))))
 
@@ -103,12 +103,12 @@
   (let [texts (dictionary/load-texts settings)]
     (is (= ["en" "de" "hu"] (map :language (dictionary/list-catalog-files settings))))
     (is (= "/dictionary_test/i18n/de.json" (:address (second (dictionary/list-catalog-files settings)))))
-    (is (= "Add 3 items" (dictionary/make-text texts "en" :orders.cart/add {:count 3})))
-    (is (= "1 Artikel hinzufügen" (dictionary/make-text texts "de" :orders.cart/add {:count 1})) "the language's plural rules")
-    (is (= "Cart" (dictionary/make-text texts "de" :orders.cart/title {})) "missing in German: the fallback's")
-    (is (= "orders.cart/nowhere" (dictionary/make-text texts "de" :orders.cart/nowhere {})) "missing everywhere: the key's name")
-    (is (= "Klein (<30cm)" (dictionary/make-text texts "de" :sizes/small {})) "a < is text")
-    (is (= "Kosár" (dictionary/make-text texts "hu" :orders.cart/title {})))))
+    (is (= "Add 3 items" (dictionary/with-language texts "en" (dictionary/tr :orders.cart/add {:count 3}))))
+    (is (= "1 Artikel hinzufügen" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/add {:count 1}))) "the language's plural rules")
+    (is (= "Cart" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/title {}))) "missing in German: the fallback's")
+    (is (= "orders.cart/nowhere" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/nowhere {}))) "missing everywhere: the key's name")
+    (is (= "Klein (<30cm)" (dictionary/with-language texts "de" (dictionary/tr :sizes/small {}))) "a < is text")
+    (is (= "Kosár" (dictionary/with-language texts "hu" (dictionary/tr :orders.cart/title {}))))))
 
 (deftest a-catalog-that-isnt-there-is-named
   (is (= {:type :dictionary/missing-catalogs :resources ["dictionary_test/i18n/fr.json"]}
@@ -127,7 +127,7 @@
 (deftest tr-in-the-bound-language
   (let [texts (dictionary/load-texts settings)]
     (is (= "3 Artikel hinzufügen" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/add {:count 3}))))
-    (is (= "Cart" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/title {}))) "the fallback's, as make-text")
+    (is (= "Cart" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/title {}))) "the fallback's")
     (is (= ["Add 1 item" "1 Artikel hinzufügen"]
            (dictionary/with-language texts "en"
              [(dictionary/tr :orders.cart/add {:count 1})
@@ -184,5 +184,5 @@
 (deftest a-reasons-data-are-its-texts-arguments
   (testing "the key's name without its namespace, - read as _: ICU's names take no -"
     (is (= "Too many: try again in 1,500 ms."
-           (dictionary/make-text reason-texts "en" :bridge/too-many {:retry-after-ms 1500})))
-    (is (= "Shipped on today." (dictionary/make-text reason-texts "en" :order/already-shipped {:order/shipped-at "today"})))))
+           (dictionary/with-language reason-texts "en" (dictionary/tr :bridge/too-many {:retry-after-ms 1500}))))
+    (is (= "Shipped on today." (dictionary/with-language reason-texts "en" (dictionary/tr :order/already-shipped {:order/shipped-at "today"}))))))

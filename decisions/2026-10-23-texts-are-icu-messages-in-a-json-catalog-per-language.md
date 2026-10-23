@@ -1,5 +1,7 @@
 > **Changed in part** by [A refusal is a named reason, declared on its handler](https://github.com/p4ulcristian/bridge/blob/tidy-up/decisions/2026-10-23-a-refusal-is-a-named-reason-declared-on-its-handler.md) (bridge's, 2026-10-23, built on tidy-up, not released): an args key names its ICU argument with each `-` read as `_` (`{:retry-after-ms 3}` fills `{retry_after_ms}`); `check-texts-of-reasons` checks at the start that every refusal's reason has its text in every language.
 
+> **Changed in part** by [tr is the one text call on the server](2026-10-23-tr-is-the-one-text-call-on-the-server.md) (2026-10-23, built on tidy-up, not released): the server's api has no `make-text`; `tr` is its one text call.
+
 > **Changed in part** by [Texts are `(tr key args)`, in the language bound around them; none bound is an error](2026-10-23-texts-are-tr-under-a-bound-language.md) (2026-10-23): a text is `(tr key args)` in the language bound around it (`with-language`); none bound is an error. Its "No dynamic language" and "Instead of: a dynamic `*locale*`" are replaced.
 
 > **Changed in part** by [Each language carries its own name; flags are the app's](2026-10-23-each-language-carries-its-own-name.md) (2026-10-23, v0.3.0): a language in `:languages` and `:preview-languages` is `{:code :name}`; the settings example's tags are maps now.

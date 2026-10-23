@@ -22,9 +22,12 @@
 
      ;; the texts: ICU MessageFormat messages, a flat JSON catalog per language
      (def texts (dictionary/load-texts settings))   ; once, at the start
-     (dictionary/make-text texts \"de\" :orders.cart/add {:count 3})   ; the language is a value: an email's, a PDF's
-     (dictionary/with-language texts \"de\"                           ; bound: groundwork binds the request's
-       (dictionary/tr :orders.cart/add {:count 3}))                  ;=> \"3 Artikel hinzufügen\"
+     (dictionary/with-language texts \"de\"   ; bound: groundwork binds the request's; an email its row's
+       (dictionary/tr :orders.cart/add {:count 3}))   ;=> \"3 Artikel hinzufügen\"
+
+   tr is the one text call: the language is never passed by hand. Code
+   outside a request (a job writing an email) binds the language itself,
+   with-language, the person's language read first.
 
    A request's language: the address's prefix (with more than one
    language), then the cookie the settings name, then Accept-Language, then
@@ -106,16 +109,6 @@
   [settings]
   (catalogs/load-texts settings))
 
-(defn make-text
-  "The key's ICU message in the language (a value: the request's, or the
-   row's an email or a PDF is made for), args filled in ({} for none; a
-   key names its argument without its namespace, a - read as _:
-   {:retry-after-ms 3} fills {retry_after_ms}),
-   by ICU4J; the fallback language's when the language's catalog lacks
-   it; the key's name, \"orders.cart/add\", when neither has it."
-  [texts language message-key args]
-  (catalogs/make-text texts language message-key args))
-
 (defmacro with-language
   "Runs body with texts and the language bound, for every tr inside (and
    on the threads Clojure starts from there: future, pmap, agents; a Java
@@ -133,7 +126,11 @@
 
 (defn tr
   "The key's ICU message in the language bound around it (with-language),
-   args filled in ({} for none), as make-text gives it; throws
+   the one text call on the server. args filled in ({} for none; a key
+   names its argument without its namespace, a - read as _:
+   {:retry-after-ms 3} fills {retry_after_ms}), by ICU4J; the fallback
+   language's when the language's catalog lacks it; the key's name,
+   \"orders.cart/add\", when neither has it. Throws
    :dictionary/no-language, naming the key, when none is bound: never a
    text in a language nobody chose."
   [message-key args]
