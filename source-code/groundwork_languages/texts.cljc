@@ -1,4 +1,4 @@
-(ns dictionary.texts
+(ns groundwork-languages.texts
   "Which message a key is shown by, the same on both sides. A catalog is
    one language's flat map of ICU MessageFormat messages by key, as its
    JSON file holds it; the texts are every catalog the app loaded, with

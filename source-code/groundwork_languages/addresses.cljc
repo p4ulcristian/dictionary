@@ -1,11 +1,11 @@
-(ns dictionary.addresses
+(ns groundwork-languages.addresses
   "A language in an address, the same on both sides: the first part of the
    path, /de/orders, when more than one language shows (the launched ones
    and the preview ones this environment shows). The default language's
    addresses carry none, /orders; one given anyway, /en/orders, is read as
    it."
   (:require
-   [dictionary.settings :as settings]))
+   [groundwork-languages.settings :as settings]))
 
 (defn- has-several-languages? [settings]
   (< 1 (count (settings/list-live-languages settings))))

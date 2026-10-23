@@ -1,4 +1,4 @@
-(ns dictionary.requests
+(ns groundwork-languages.requests
   "A request's language, on the server: the address's prefix (with more
    than one language), then the cookie (when the settings name one and it
    holds one of the languages), then the browser's Accept-Language (a tag,
@@ -6,8 +6,8 @@
    every request is in it."
   (:require
    [clojure.string :as str]
-   [dictionary.addresses :as addresses]
-   [dictionary.settings :as settings]))
+   [groundwork-languages.addresses :as addresses]
+   [groundwork-languages.settings :as settings]))
 
 (defn- read-cookie [request cookie-name]
   (some (fn [pair]

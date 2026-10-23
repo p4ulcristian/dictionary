@@ -1,4 +1,4 @@
-(ns dictionary.catalogs
+(ns groundwork-languages.catalogs
   "The catalogs on the server: read from the classpath, each language's
    <catalogs-path>/<language>.json, and a message made into text by ICU4J
    in the language bound around the caller, *bound*, by with-language
@@ -8,8 +8,8 @@
   (:require
    [clojure.java.io :as io]
    [clojure.set :as set]
-   [dictionary.settings :as settings]
-   [dictionary.texts :as texts]
+   [groundwork-languages.settings :as settings]
+   [groundwork-languages.texts :as texts]
    [jsonista.core :as json])
   (:import
    (com.ibm.icu.text MessageFormat)
@@ -33,7 +33,7 @@
 
 (defn load-texts
   "Every language that shows, its catalog read from the classpath: the
-   texts (dictionary.texts). A catalog that isn't there throws, naming
+   texts (groundwork-languages.texts). A catalog that isn't there throws, naming
    each."
   [{:keys [fallback-language] :as settings}]
   (let [files   (list-catalog-files settings)
@@ -41,7 +41,7 @@
         missing (vec (for [{:keys [language resource]} files :when (nil? (get read language))] resource))]
     (when (seq missing)
       (throw (ex-info (str "No catalog on the classpath for " (pr-str missing))
-                      {:type :dictionary/missing-catalogs :resources missing})))
+                      {:type :groundwork-languages/missing-catalogs :resources missing})))
     {:fallback-language fallback-language :catalogs read}))
 
 (defn- format-message [^String message ^String language args]
@@ -63,35 +63,35 @@
 
 (defn make-bound
   "{:texts … :language …} for with-language to bind. Throws
-   :dictionary/bad-texts when texts isn't load-texts's
-   {:fallback-language … :catalogs …}, and :dictionary/bad-language when
+   :groundwork-languages/bad-texts when texts isn't load-texts's
+   {:fallback-language … :catalogs …}, and :groundwork-languages/bad-language when
    language isn't a language's tag, a non-empty string (nil among them)."
   [texts language]
   (when-not (and (map? texts) (string? (:fallback-language texts)) (map? (:catalogs texts)))
     (throw (ex-info "with-language takes the texts load-texts made"
-                    {:type :dictionary/bad-texts})))
+                    {:type :groundwork-languages/bad-texts})))
   (when-not (and (string? language) (seq language))
     (throw (ex-info (str "with-language takes a language's tag, not " (pr-str language))
-                    {:type :dictionary/bad-language :language language})))
+                    {:type :groundwork-languages/bad-language :language language})))
   {:texts texts :language language})
 
 (defn read-bound-language
-  "The language bound by with-language; throws :dictionary/no-language
+  "The language bound by with-language; throws :groundwork-languages/no-language
    when none is."
   []
   (or (:language *bound*)
       (throw (ex-info "No language bound: read inside with-language (groundwork binds the request's)"
-                      {:type :dictionary/no-language}))))
+                      {:type :groundwork-languages/no-language}))))
 
 (defn make-bound-text
   "The key's message in the bound language (make-text's); throws
-   :dictionary/no-language, naming the key, when none is bound."
+   :groundwork-languages/no-language, naming the key, when none is bound."
   [message-key args]
   (let [{:keys [texts language]} *bound*]
     (when-not language
       (throw (ex-info (str "No language bound for " (texts/turn-key-into-catalog-key message-key)
                            ": tr is called inside with-language (groundwork binds the request's)")
-                      {:type :dictionary/no-language :key message-key})))
+                      {:type :groundwork-languages/no-language :key message-key})))
     (make-text texts language message-key args)))
 
 (defn- find-bad-messages [language catalog]
@@ -137,13 +137,13 @@
         catalogs))
 
 (defn check-texts-of-reasons
-  "Returns reasons; throws :dictionary/missing-texts with every problem at
+  "Returns reasons; throws :groundwork-languages/missing-texts with every problem at
    once (find-reasons-without-texts's) when one lacks a text."
   [texts reasons]
   (let [problems (find-reasons-without-texts texts reasons)]
     (when (seq problems)
       (throw (ex-info (str "Some reasons have no text in every language: " (pr-str problems))
-                      {:type :dictionary/missing-texts :problems problems})))
+                      {:type :groundwork-languages/missing-texts :problems problems})))
     reasons))
 
 (defn find-problems-in-catalogs

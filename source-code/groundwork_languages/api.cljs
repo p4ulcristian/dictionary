@@ -1,34 +1,34 @@
-(ns dictionary.api
+(ns groundwork-languages.api
   "The page's language, in the browser: read from the address, and kept
    when an address is made. The server's side is this namespace's .clj
    half, which picked the language the page came in (its prefix, the
    cookie, Accept-Language, the default).
 
-     (dictionary/find-language-of-path settings \"/de/orders\" \"en\")   ;=> \"de\"
-     (dictionary/find-language-of-path settings \"/orders\" \"de\")      ;=> \"de\": no prefix, the page's
-     (dictionary/make-path-in-language settings \"/orders\" \"de\")      ;=> \"/de/orders\"
-     (dictionary/list-languages-to-pick settings)   ;=> [{:code \"en\" :name \"English\"} …], a language menu's
+     (languages/find-language-of-path settings \"/de/orders\" \"en\")   ;=> \"de\"
+     (languages/find-language-of-path settings \"/orders\" \"de\")      ;=> \"de\": no prefix, the page's
+     (languages/make-path-in-language settings \"/orders\" \"de\")      ;=> \"/de/orders\"
+     (languages/list-languages-to-pick settings)   ;=> [{:code \"en\" :name \"English\"} …], a language menu's
 
      ;; the texts: the catalogs fetched from the server, the same files it reads
-     (-> (dictionary/fetch-catalog! settings \"de\") (.then (fn [catalog] …)))
-     (dictionary/make-text {:fallback-language \"en\" :catalogs {\"de\" de \"en\" en}}
+     (-> (languages/fetch-catalog! settings \"de\") (.then (fn [catalog] …)))
+     (languages/make-text {:fallback-language \"en\" :catalogs {\"de\" de \"en\" en}}
                            \"de\" :orders.cart/add {:count 3})
 
    The settings are the server's, carried in the page; check them once,
    check-settings, before using them."
   (:require
-   [dictionary.addresses :as addresses]
-   [dictionary.catalogs :as catalogs]
-   [dictionary.settings :as settings]))
+   [groundwork-languages.addresses :as addresses]
+   [groundwork-languages.catalogs :as catalogs]
+   [groundwork-languages.settings :as settings]))
 
 (def settings-shape
   "The settings, every key required: {:languages [{:code \"en\" :name
    \"English\"} {:code \"de\" :name \"Deutsch\"}] :default \"en\"
-   :cookie-name \"lang\" …} (see dictionary.settings)."
+   :cookie-name \"lang\" …} (see groundwork-languages.settings)."
   settings/settings-shape)
 
 (defn check-settings
-  "Returns the settings; throws {:type :dictionary/bad-settings :errors …}
+  "Returns the settings; throws {:type :groundwork-languages/bad-settings :errors …}
    with every problem at once when they don't fit."
   [settings]
   (settings/check-settings settings))
@@ -79,8 +79,8 @@
    by intl-messageformat; the fallback language's when the language's
    catalog lacks it; the key's name when neither has it. texts:
    {:fallback-language … :catalogs {language catalog}}, the catalogs
-   fetched so far. parlor's tr calls it, in the page's language; an app's
-   views call parlor's tr. (On the server the one text call is tr, under
+   fetched so far. groundwork-screens's tr calls it, in the page's language; an app's
+   views call groundwork-screens's tr. (On the server the one text call is tr, under
    with-language.)"
   [texts language message-key args]
   (catalogs/make-text texts language message-key args))

@@ -1,11 +1,11 @@
-(ns dictionary.catalogs
+(ns groundwork-languages.catalogs
   "The catalogs in the browser: fetched from the page's own origin, each
    language's /<catalogs-path>/<language>.json (the same file the server
    reads), and a message made into text by intl-messageformat (the app's
    package.json lists it)."
   (:require
    ["intl-messageformat" :refer [IntlMessageFormat]]
-   [dictionary.texts :as texts]))
+   [groundwork-languages.texts :as texts]))
 
 (defn fetch-catalog!
   "A promise of a language's catalog, {\"orders.cart/add\" \"…\"}, fetched
@@ -17,7 +17,7 @@
                (if (.-ok response)
                  (.json response)
                  (throw (ex-info (str "No catalog for " language ": the server answered " (.-status response))
-                                 {:type :dictionary/missing-catalog :language language})))))
+                                 {:type :groundwork-languages/missing-catalog :language language})))))
       (.then #(js->clj %))))
 
 (defonce ^:private formats

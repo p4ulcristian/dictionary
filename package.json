@@ -1,5 +1,5 @@
 {
-  "name": "dictionary",
+  "name": "groundwork-languages",
   "private": true,
   "description": "dictionary's ClojureScript test build; intl-messageformat makes a message into text in the browser",
   "dependencies": {

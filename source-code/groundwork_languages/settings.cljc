@@ -1,8 +1,8 @@
-(ns dictionary.settings
-  "dictionary's settings, as a malli shape, checked before anything is
+(ns groundwork-languages.settings
+  "groundwork-languages's settings, as a malli shape, checked before anything is
    read. Nothing has a default: every key is written out, nil where it is
    a choice, and a missing or unknown one refuses, named, with every other
-   problem at once (:dictionary/bad-settings)."
+   problem at once (:groundwork-languages/bad-settings)."
   (:require
    [malli.core :as malli]
    [malli.error :as malli-error]))
@@ -82,11 +82,11 @@
    [:fn {:error/message ":languages and :preview-languages name each language once"} are-languages-distinct?]])
 
 (defn check-settings
-  "Returns the settings; throws {:type :dictionary/bad-settings :errors …}
+  "Returns the settings; throws {:type :groundwork-languages/bad-settings :errors …}
    with every problem at once when they don't fit."
   [settings]
   (when-let [explanation (malli/explain settings-shape settings)]
     (let [errors (malli-error/humanize explanation)]
       (throw (ex-info (str "The settings have problems: " (pr-str errors))
-                      {:type :dictionary/bad-settings :errors errors}))))
+                      {:type :groundwork-languages/bad-settings :errors errors}))))
   settings)

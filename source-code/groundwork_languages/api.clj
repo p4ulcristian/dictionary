@@ -1,8 +1,8 @@
-(ns dictionary.api
+(ns groundwork-languages.api
   "The request's language, and the page's addresses in every language: the
    server's side. The browser's is this namespace's .cljs half.
 
-     (def settings (dictionary/check-settings {:languages         [{:code \"en\" :name \"English\"}   ; launched
+     (def settings (languages/check-settings {:languages         [{:code \"en\" :name \"English\"}   ; launched
                                                                 {:code \"de\" :name \"Deutsch\"}]
                                                :default           \"en\"     ; its addresses carry no prefix
                                                :cookie-name       \"lang\"   ; or nil
@@ -10,20 +10,20 @@
                                                :fallback-language \"en\"     ; a message missing from a catalog
                                                :catalogs-path     \"i18n\"})) ; i18n/<language>.json, on the classpath
 
-     (dictionary/find-language-of-request settings request)
+     (languages/find-language-of-request settings request)
      ;=> {:language \"de\" :path \"/orders\"}   ; for /de/orders, or /orders with a German browser
-     (dictionary/make-alternate-links settings \"https://shop.example\" \"/orders\")
+     (languages/make-alternate-links settings \"https://shop.example\" \"/orders\")
      ;=> [{:hreflang \"en\" :href \"https://shop.example/orders\"}
      ;    {:hreflang \"de\" :href \"https://shop.example/de/orders\"}
      ;    {:hreflang \"x-default\" :href \"https://shop.example/orders\"}]
-     (dictionary/make-path-in-language settings \"/orders\" \"de\")   ;=> \"/de/orders\"
-     (dictionary/list-languages-to-pick settings)
+     (languages/make-path-in-language settings \"/orders\" \"de\")   ;=> \"/de/orders\"
+     (languages/list-languages-to-pick settings)
      ;=> [{:code \"en\" :name \"English\"} {:code \"de\" :name \"Deutsch\"}]   ; a language menu's
 
      ;; the texts: ICU MessageFormat messages, a flat JSON catalog per language
-     (def texts (dictionary/load-texts settings))   ; once, at the start
-     (dictionary/with-language texts \"de\"   ; bound: groundwork binds the request's; an email its row's
-       (dictionary/tr :orders.cart/add {:count 3}))   ;=> \"3 Artikel hinzufügen\"
+     (def texts (languages/load-texts settings))   ; once, at the start
+     (languages/with-language texts \"de\"   ; bound: groundwork binds the request's; an email its row's
+       (languages/tr :orders.cart/add {:count 3}))   ;=> \"3 Artikel hinzufügen\"
 
    tr is the one text call: the language is never passed by hand. Code
    outside a request (a job writing an email) binds the language itself,
@@ -36,19 +36,19 @@
    checked once, by check-settings, before the app starts; the functions
    trust them."
   (:require
-   [dictionary.addresses :as addresses]
-   [dictionary.catalogs :as catalogs]
-   [dictionary.requests :as requests]
-   [dictionary.settings :as settings]))
+   [groundwork-languages.addresses :as addresses]
+   [groundwork-languages.catalogs :as catalogs]
+   [groundwork-languages.requests :as requests]
+   [groundwork-languages.settings :as settings]))
 
 (def settings-shape
   "The settings, every key required: {:languages [{:code \"en\" :name
    \"English\"} {:code \"de\" :name \"Deutsch\"}] :default \"en\"
-   :cookie-name \"lang\" …} (see dictionary.settings)."
+   :cookie-name \"lang\" …} (see groundwork-languages.settings)."
   settings/settings-shape)
 
 (defn check-settings
-  "Returns the settings; throws {:type :dictionary/bad-settings :errors …}
+  "Returns the settings; throws {:type :groundwork-languages/bad-settings :errors …}
    with every problem at once when they don't fit."
   [settings]
   (settings/check-settings settings))
@@ -105,7 +105,7 @@
 (defn load-texts
   "Every language that shows, its catalog read from the classpath:
    {:fallback-language … :catalogs {language {key message}}}. A catalog
-   that isn't there throws, :dictionary/missing-catalogs."
+   that isn't there throws, :groundwork-languages/missing-catalogs."
   [settings]
   (catalogs/load-texts settings))
 
@@ -115,11 +115,11 @@
    executor's or a callback's thread carries nothing). The groundwork
    composer binds the request's around every request; an email, a PDF or
    a job binds the language of the row it is made for. Throws before body
-   runs: :dictionary/bad-texts when texts isn't load-texts's,
-   :dictionary/bad-language when language isn't a tag (nil, say).
+   runs: :groundwork-languages/bad-texts when texts isn't load-texts's,
+   :groundwork-languages/bad-language when language isn't a tag (nil, say).
 
-     (dictionary/with-language texts (:order/language order)
-       {:subject (dictionary/tr :emails.order/subject {:order 7})})"
+     (languages/with-language texts (:order/language order)
+       {:subject (languages/tr :emails.order/subject {:order 7})})"
   [texts language & body]
   `(binding [catalogs/*bound* (catalogs/make-bound ~texts ~language)]
      ~@body))
@@ -131,7 +131,7 @@
    {:retry-after-ms 3} fills {retry_after_ms}), by ICU4J; the fallback
    language's when the language's catalog lacks it; the key's name,
    \"orders.cart/add\", when neither has it. Throws
-   :dictionary/no-language, naming the key, when none is bound: never a
+   :groundwork-languages/no-language, naming the key, when none is bound: never a
    text in a language nobody chose."
   [message-key args]
   (catalogs/make-bound-text message-key args))
@@ -139,25 +139,25 @@
 (defn read-bound-language
   "The language bound around the caller (with-language), for what isn't a
    text: <html lang>, the language an order is saved in. Throws
-   :dictionary/no-language when none is bound."
+   :groundwork-languages/no-language when none is bound."
   []
   (catalogs/read-bound-language))
 
 (defn check-texts-of-reasons
   "For the start: every reason a refusal may give (bridge's named
    refusals: the handlers' :refusals and the libraries' own, bridge's and
-   doorman's), {reason data-shape}, has its text in every catalog of
+   groundwork-access's), {reason data-shape}, has its text in every catalog of
    texts (load-texts's: every language that shows); the reason is the
    text's key and its data the text's arguments ({retry_after_ms} for
    :retry-after-ms: turn-args-into-names). Throws
-   {:type :dictionary/missing-texts :problems {language {…}}} with every
+   {:type :groundwork-languages/missing-texts :problems {language {…}}} with every
    problem at once: :missing-texts, the reasons a catalog lacks;
    :unknown-arguments, by reason, the arguments a text names that its
    reason's data doesn't carry (checked for a nil shape, which carries
    none, and a [:map …]); :bad-messages, by reason, a text ICU can't read.
    Returns reasons.
 
-     (dictionary/check-texts-of-reasons texts (merge bridge/refusals doorman/refusals
+     (languages/check-texts-of-reasons texts (merge bridge/refusals access/refusals
                                                      (apply merge (map :refusals (vals handlers)))))"
   [texts reasons]
   (catalogs/check-texts-of-reasons texts reasons))
@@ -167,6 +167,6 @@
    read. {} when so; else by language :missing-keys and :bad-messages,
    and :missing-catalogs.
 
-     (is (= {} (dictionary/find-problems-in-catalogs settings)))"
+     (is (= {} (languages/find-problems-in-catalogs settings)))"
   [settings]
   (catalogs/find-problems-in-catalogs settings))

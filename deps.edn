@@ -1,5 +1,5 @@
-;; dictionary: the request's language, and the page's in every language.
-;; One tree for both languages: source-code/dictionary/, the server's .clj and
+;; groundwork-languages: the request's language, and the page's in every language.
+;; One tree for both languages: source-code/groundwork_languages/, the server's .clj and
 ;; the browser's .cljs beside the .cljc both share.
 {:paths ["source-code"]
 
