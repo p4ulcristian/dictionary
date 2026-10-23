@@ -12,7 +12,7 @@ from a language falls back to the fallback language, and missing there
 shows as its name.
 
 ```clojure
-io.github.p4ulcristian/dictionary {:git/tag "v0.2.0" :git/sha "df1d373"}
+io.github.p4ulcristian/dictionary {:git/tag "v0.2.1" :git/sha "bfea9bd"}
 ```
 
 Needs malli, jsonista and ICU4J; in the browser, intl-messageformat. One public namespace, `dictionary.api`: a `.clj` for the
