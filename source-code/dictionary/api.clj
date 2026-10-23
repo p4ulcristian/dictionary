@@ -23,6 +23,8 @@
      ;; the texts: ICU MessageFormat messages, a flat JSON catalog per language
      (def texts (dictionary/load-texts settings))   ; once, at the start
      (dictionary/make-text texts \"de\" :orders.cart/add {:count 3})   ; the language is a value: an email's, a PDF's
+     (dictionary/with-language texts \"de\"                           ; bound: groundwork binds the request's
+       (dictionary/tr :orders.cart/add {:count 3}))                  ;=> \"3 Artikel hinzufügen\"
 
    A request's language: the address's prefix (with more than one
    language), then the cookie the settings name, then Accept-Language, then
@@ -111,6 +113,27 @@
    it; the key's name, \"orders.cart/add\", when neither has it."
   [texts language message-key args]
   (catalogs/make-text texts language message-key args))
+
+(defmacro with-language
+  "Runs body with texts and the language bound, for every tr inside (and
+   on the threads Clojure starts from there: future, pmap, agents; a Java
+   executor's or a callback's thread carries nothing). The groundwork
+   composer binds the request's around every request; an email, a PDF or
+   a job binds the language of the row it is made for.
+
+     (dictionary/with-language texts (:order/language order)
+       {:subject (dictionary/tr :emails.order/subject {:order 7})})"
+  [texts language & body]
+  `(binding [catalogs/*bound* {:texts ~texts :language ~language}]
+     ~@body))
+
+(defn tr
+  "The key's ICU message in the language bound around it (with-language),
+   args filled in ({} for none), as make-text gives it; throws
+   :dictionary/no-language, naming the key, when none is bound: never a
+   text in a language nobody chose."
+  [message-key args]
+  (catalogs/make-bound-text message-key args))
 
 (defn find-problems-in-catalogs
   "For an app's test: every key in every language, every message ICU can

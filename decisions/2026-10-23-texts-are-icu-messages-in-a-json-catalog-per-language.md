@@ -1,3 +1,5 @@
+> **Changed in part** by [Texts are `(tr key args)`, in the language bound around them; none bound is an error](2026-10-23-texts-are-tr-under-a-bound-language.md) (2026-10-23): a text is `(tr key args)` in the language bound around it (`with-language`); none bound is an error. Its "No dynamic language" and "Instead of: a dynamic `*locale*`" are replaced.
+
 > **Changed in part** by [Each language carries its own name; flags are the app's](2026-10-23-each-language-carries-its-own-name.md) (2026-10-23, v0.3.0): a language in `:languages` and `:preview-languages` is `{:code :name}`; the settings example's tags are maps now.
 
 # Texts are ICU messages in a flat JSON catalog per language, read by both sides

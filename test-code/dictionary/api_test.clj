@@ -16,7 +16,7 @@
 (deftest the-names-of-the-api
   (is (= '#{settings-shape check-settings find-language-of-request make-alternate-links
             split-language-from-path make-path-in-language list-live-languages list-languages-to-pick
-            list-catalog-files load-texts make-text find-problems-in-catalogs}
+            list-catalog-files load-texts make-text with-language tr find-problems-in-catalogs}
          (set (keys (ns-publics 'dictionary.api))))))
 
 (deftest a-requests-language
@@ -122,3 +122,19 @@
     (is (= ["a/two"] (get-in problems ["de" :missing-keys])) "every key in every language")
     (is (contains? (get-in problems ["en" :bad-messages]) "a/two") "ICU can't read it")
     (is (= ["dictionary_test/gaps/fr.json"] (:missing-catalogs problems)))))
+
+(deftest tr-in-the-bound-language
+  (let [texts (dictionary/load-texts settings)]
+    (is (= "3 Artikel hinzufügen" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/add {:count 3}))))
+    (is (= "Cart" (dictionary/with-language texts "de" (dictionary/tr :orders.cart/title {}))) "the fallback's, as make-text")
+    (is (= ["Add 1 item" "1 Artikel hinzufügen"]
+           (dictionary/with-language texts "en"
+             [(dictionary/tr :orders.cart/add {:count 1})
+              (dictionary/with-language texts "de" (dictionary/tr :orders.cart/add {:count 1}))]))
+        "the innermost binding")
+    (is (= "Kosár" (dictionary/with-language texts "hu" @(future (dictionary/tr :orders.cart/title {}))))
+        "a future carries it")
+    (is (= {:type :dictionary/no-language :key :orders.cart/add}
+           (try (dictionary/tr :orders.cart/add {:count 3})
+                (catch clojure.lang.ExceptionInfo e (ex-data e))))
+        "none bound: an error, not a language nobody chose")))

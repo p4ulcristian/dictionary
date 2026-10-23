@@ -54,6 +54,22 @@
     (format-message message found-in args)
     (texts/turn-key-into-catalog-key message-key)))
 
+(def ^:dynamic *bound*
+  "{:texts … :language …}, bound by with-language for everything inside;
+   nil outside, where tr throws."
+  nil)
+
+(defn make-bound-text
+  "The key's message in the bound language (make-text's); throws
+   :dictionary/no-language, naming the key, when none is bound."
+  [message-key args]
+  (let [{:keys [texts language]} *bound*]
+    (when-not language
+      (throw (ex-info (str "No language bound for " (texts/turn-key-into-catalog-key message-key)
+                           ": tr is called inside with-language (groundwork binds the request's)")
+                      {:type :dictionary/no-language :key message-key})))
+    (make-text texts language message-key args)))
+
 (defn- find-bad-messages [language catalog]
   (into (sorted-map)
         (keep (fn [[k message]]
