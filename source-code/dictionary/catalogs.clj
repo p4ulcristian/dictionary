@@ -1,8 +1,9 @@
 (ns dictionary.catalogs
   "The catalogs on the server: read from the classpath, each language's
    <catalogs-path>/<language>.json, and a message made into text by ICU4J,
-   in the language handed in as a value (no dynamic language: an email or
-   a PDF passes the language of the row it is made for)."
+   in a language handed in as a value (make-text: an email or a PDF passes
+   the language of the row it is made for), or in the language bound
+   around the caller, *bound*, by with-language (make-bound-text, tr's)."
   (:require
    [clojure.java.io :as io]
    [clojure.set :as set]
@@ -58,6 +59,20 @@
   "{:texts … :language …}, bound by with-language for everything inside;
    nil outside, where tr throws."
   nil)
+
+(defn make-bound
+  "{:texts … :language …} for with-language to bind. Throws
+   :dictionary/bad-texts when texts isn't load-texts's
+   {:fallback-language … :catalogs …}, and :dictionary/bad-language when
+   language isn't a language's tag, a non-empty string (nil among them)."
+  [texts language]
+  (when-not (and (map? texts) (string? (:fallback-language texts)) (map? (:catalogs texts)))
+    (throw (ex-info "with-language takes the texts load-texts made"
+                    {:type :dictionary/bad-texts})))
+  (when-not (and (string? language) (seq language))
+    (throw (ex-info (str "with-language takes a language's tag, not " (pr-str language))
+                    {:type :dictionary/bad-language :language language})))
+  {:texts texts :language language})
 
 (defn read-bound-language
   "The language bound by with-language; throws :dictionary/no-language

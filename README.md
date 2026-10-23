@@ -31,7 +31,7 @@ server, a `.cljs` for the browser.
 | both | `list-live-languages` | the tags of the launched languages, then of the preview ones that show here |
 | both | `list-languages-to-pick` | the same languages, `{:code :name}` each, in the settings' order: what a language menu lists |
 | server | `load-texts` `make-text` | every catalog that shows, read once; a message in a language, given as a value |
-| server | `with-language` `tr` `read-bound-language` | texts and a language bound around a body; `(tr :key args)` in it, and the language itself (`<html lang>`); an error where none is bound |
+| server | `with-language` `tr` `read-bound-language` | texts and a language bound around a body, both checked first (`:dictionary/bad-texts`, `:dictionary/bad-language`); `(tr :key args)` in it, and the language itself (`<html lang>`); an error where none is bound |
 | server | `list-catalog-files` | each catalog's classpath resource and the address the browser fetches it at |
 | server | `find-problems-in-catalogs` | for a test: every key in every language, every message ICU reads |
 | browser | `fetch-catalog!` `make-text` | a language's catalog from the server; a message in a language |

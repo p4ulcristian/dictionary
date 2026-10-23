@@ -119,12 +119,14 @@
    on the threads Clojure starts from there: future, pmap, agents; a Java
    executor's or a callback's thread carries nothing). The groundwork
    composer binds the request's around every request; an email, a PDF or
-   a job binds the language of the row it is made for.
+   a job binds the language of the row it is made for. Throws before body
+   runs: :dictionary/bad-texts when texts isn't load-texts's,
+   :dictionary/bad-language when language isn't a tag (nil, say).
 
      (dictionary/with-language texts (:order/language order)
        {:subject (dictionary/tr :emails.order/subject {:order 7})})"
   [texts language & body]
-  `(binding [catalogs/*bound* {:texts ~texts :language ~language}]
+  `(binding [catalogs/*bound* (catalogs/make-bound ~texts ~language)]
      ~@body))
 
 (defn tr

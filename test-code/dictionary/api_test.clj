@@ -138,5 +138,12 @@
            (try (dictionary/tr :orders.cart/add {:count 3})
                 (catch clojure.lang.ExceptionInfo e (ex-data e))))
         "none bound: an error, not a language nobody chose")
+    (is (= {:type :dictionary/bad-language :language nil}
+           (try (dictionary/with-language texts nil (dictionary/tr :orders.cart/add {:count 3}))
+                (catch clojure.lang.ExceptionInfo e (ex-data e))))
+        "a nil language is refused where it is bound, not later by tr")
+    (is (= :dictionary/bad-texts
+           (try (dictionary/with-language nil "de" (dictionary/tr :orders.cart/add {:count 3}))
+                (catch clojure.lang.ExceptionInfo e (:type (ex-data e))))))
     (is (= "de" (dictionary/with-language texts "de" (dictionary/read-bound-language))))
     (is (= :dictionary/no-language (try (dictionary/read-bound-language) (catch clojure.lang.ExceptionInfo e (:type (ex-data e))))))))
