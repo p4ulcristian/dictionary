@@ -23,3 +23,5 @@ Choices made while building, not asked:
 3. **The tests read every text through `with-language` and `tr`;** the names-of-the-api test no longer lists `make-text`.
 
 Left for later, outside dictionary (no caller in bridge or parlor): the composer's `test-code/groundwork/server/main/api_test.clj` (two `dictionary/make-text` checks) and `source-code/groundwork/server/main/README.md` (names `dictionary/make-text`); Iron Rainbow's `project/code/i18n/core.cljc` (server half, on a released dictionary) and its `GROUNDWORK-1.0.md`.
+
+Built since, on tidy-up (2026-10-23): the composer's test and README use `tr` under `with-language`. Iron Rainbow's are left.
